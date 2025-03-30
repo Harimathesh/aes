@@ -1,0 +1,88 @@
+/* General Styling */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #ffffff;
+    color: #000000;
+    transition: all 0.3s ease;
+    text-align: center;
+    margin: 0;
+    padding: 0;
+}
+
+/* Dark Mode */
+.dark-mode {
+    background-color: #222222;
+    color: #ffffff;
+}
+
+/* Main Container */
+.container {
+    max-width: 1200px;
+    margin: auto;
+    padding: 20px;
+}
+
+/* 🔹 Separate Text & Image Sections */
+.section-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+/* 🔹 Individual Box for Each Section */
+.section-box {
+    flex: 1;
+    min-width: 45%;
+    padding: 20px;
+    border-radius: 10px;
+    background-color: #f4f4f4;
+    text-align: center;
+    border: 2px solid #ccc;
+    box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Dark Mode Adjustments */
+.dark-mode .section-box {
+    background-color: #333333;
+    border: 2px solid #777;
+    box-shadow: 2px 2px 10px rgba(255, 255, 255, 0.1);
+}
+
+/* Input Fields & Buttons */
+textarea, input, select {
+    width: 90%;
+    padding: 10px;
+    margin: 10px 0;
+    border-radius: 5px;
+    border: 1px solid #888;
+}
+
+button {
+    background: #27ae60;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-top: 10px;
+}
+
+button:hover {
+    background: #2ecc71;
+}
+
+/* Dark Mode Toggle Button */
+.hari {
+    margin: 15px;
+    cursor: pointer;
+    padding: 10px;
+    background: #000;
+    color: white;
+    border: none;
+    border-radius: 5px;
+}
+
+.hari:hover {
+    background: #444;
+}

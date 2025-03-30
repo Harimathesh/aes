@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Encryption & Decryption</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: Arial, sans-serif; }
+        body {
+            background: linear-gradient(to right, lightgreen, white);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            padding: 20px;
+        }
+        h2 { color: black; margin-bottom: 20px; }
+        
+        .grid-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            max-width: 900px;
+            width: 100%;
+        }
+        
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            margin-bottom: 20px;
+        }
+        
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            margin: 8px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        
+        button {
+            width: 100%;
+            padding: 10px;
+            background: lightgreen;
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: background 0.3s;
+        }
+        button:hover { background: green; }
+        button:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
+        }
+        
+        .logout-btn {
+            background: lightgreen;
+            color: white;
+            width: 200px;
+            border-radius: 8px;
+            padding: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            border: none;
+            margin-top: 20px;
+        }
+        
+        #imagePreview, #decryptedImage {
+            max-width: 100%;
+            max-height: 200px;
+            margin-top: 10px;
+            display: none;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        
+        .result-container {
+            margin-top: 15px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            border: 1px solid #dee2e6;
+        }
+        
+        .input-info {
+            font-size: 12px;
+            color: #666;
+            text-align: left;
+            margin-top: -5px;
+            margin-bottom: 10px;
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .copy-notification {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            z-index: 1000;
+            display: none;
+        }
+        
+        .action-spacer {
+            margin-top: 15px;
+        }
+        
+        .image-actions {
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
+        }
+        .image-actions button {
+            flex: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="copy-notification" id="copyNotification">Copied to clipboard!</div>
+
+    <h2>🔐 AES Encryption & Decryption using Text and Image</h2>
+
+    <div class="grid-container">
+        <div>
+            <div class="container">
+                <h3>Text Encryption</h3>
+                <textarea id="plaintext" placeholder="Enter text, JSON, YAML, XML, config files, or code..." rows="6"></textarea>
+                <p class="input-info">Supports: Plain text, JSON, YAML, XML, .env, config files, code snippets (max 10MB)</p>
+                <select id="keySize">
+                    <option value="128">AES-128</option>
+                    <option value="192">AES-192</option>
+                    <option value="256" selected>AES-256</option>
+                </select>
+                <button id="encryptTextBtn" onclick="encryptText()">Encrypt</button>
+                <div id="textEncryptionResults" class="result-container" style="display:none;">
+                    <h4>Encrypted Result: <span id="textInputType" class="input-info"></span></h4>
+                    <textarea id="encryptedText" readonly rows="6"></textarea>
+                    <button onclick="copyToClipboard('encryptedText')">Copy Encrypted Data</button>
+                    <div class="action-spacer"></div>
+                    <h4>Encryption Key:</h4>
+                    <input type="text" id="encryptionKey" readonly>
+                    <button onclick="copyToClipboard('encryptionKey')">Copy Key</button>
+                </div>
+            </div>
+
+            <div class="container">
+                <h3>Image Encryption</h3>
+                <input type="file" id="imageEncrypt" accept="image/*" onchange="previewImage(event, 'imagePreview')">
+                <p class="input-info">Supports: PNG, JPG, JPEG, GIF, BMP, WEBP (max 20MB)</p>
+                <img id="imagePreview">
+                <select id="imageKeySize">
+                    <option value="128">AES-128</option>
+                    <option value="192">AES-192</option>
+                    <option value="256" selected>AES-256</option>
+                </select>
+                <button id="encryptImageBtn" onclick="encryptImage()">Encrypt Image</button>
+                <div id="imageEncryptionResults" class="result-container" style="display:none;">
+                    <h4>Encrypted Result:</h4>
+                    <textarea id="encryptedImage" readonly rows="6"></textarea>
+                    <button onclick="copyToClipboard('encryptedImage')">Copy Encrypted Data</button>
+                    <div class="action-spacer"></div>
+                    <h4>Encryption Key:</h4>
+                    <input type="text" id="imageEncryptionKey" readonly>
+                    <button onclick="copyKeyWithoutText('imageEncryptionKey')">Copy Key</button>
+                </div>
+            </div>
+        </div>
+
+        <div>
+            <div class="container">
+                <h3>Text Decryption</h3>
+                <textarea id="decryptText" placeholder="Paste encrypted data here" rows="6"></textarea>
+                <input type="text" id="decryptKey" placeholder="Paste encryption key here">
+                <button id="decryptTextBtn" onclick="decryptText()">Decrypt</button>
+                <div id="textDecryptionResults" class="result-container" style="display:none;">
+                    <h4>Decrypted Result: <span id="decryptedTextType" class="input-info"></span></h4>
+                    <textarea id="decryptedText" readonly rows="6"></textarea>
+                    <button onclick="copyToClipboard('decryptedText')">Copy Decrypted Text</button>
+                </div>
+            </div>
+
+            <div class="container">
+                <h3>Image Decryption</h3>
+                <textarea id="imageDecryptData" placeholder="Paste encrypted image data here" rows="6"></textarea>
+                <input type="text" id="imageDecryptKey" placeholder="Paste encryption key here">
+                <button id="decryptImageBtn" onclick="decryptImage()">Decrypt Image</button>
+                <div id="imageDecryptionResults" class="result-container" style="display:none;">
+                    <h4>Decrypted Image:</h4>
+                    <img id="decryptedImage">
+                    <div class="image-actions">
+                        <button onclick="downloadDecryptedImage()">Download Image</button>
+                        <button onclick="copyImageToClipboard()">Copy Image</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <button class="logout-btn" onclick="logout()">Logout</button>
+
+    <script>
+        // Global variables
+        let currentDecryptedImageBlob = null;
+        let encryptTextBtnOriginal = '';
+        let encryptImageBtnOriginal = '';
+        let decryptTextBtnOriginal = '';
+        let decryptImageBtnOriginal = '';
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Store original button texts
+            encryptTextBtnOriginal = document.getElementById('encryptTextBtn').innerHTML;
+            encryptImageBtnOriginal = document.getElementById('encryptImageBtn').innerHTML;
+            decryptTextBtnOriginal = document.getElementById('decryptTextBtn').innerHTML;
+            decryptImageBtnOriginal = document.getElementById('decryptImageBtn').innerHTML;
+        });
+
+        function showLoading(button) {
+            button.innerHTML = `<span class="loading"></span> Processing...`;
+            button.disabled = true;
+        }
+
+        function resetButton(button, originalText) {
+            button.innerHTML = originalText;
+            button.disabled = false;
+        }
+
+        function showCopyNotification() {
+            const notification = document.getElementById('copyNotification');
+            notification.style.display = 'block';
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 2000);
+        }
+
+        function copyToClipboard(elementId) {
+            const element = document.getElementById(elementId);
+            element.select();
+            document.execCommand('copy');
+            showCopyNotification();
+        }
+
+        function copyKeyWithoutText(elementId) {
+            const element = document.getElementById(elementId);
+            element.select();
+            document.execCommand('copy');
+            showCopyNotification();
+            // Clear selection immediately after copying
+            window.getSelection().removeAllRanges();
+        }
+
+        function previewImage(event, targetId) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            // Check file size
+            if (file.size > 20 * 1024 * 1024) {
+                alert('Image too large (max 20MB)');
+                event.target.value = '';
+                return;
+            }
+
+            let reader = new FileReader();
+            reader.onload = function(){
+                let preview = document.getElementById(targetId);
+                preview.src = reader.result;
+                preview.style.display = "block";
+            }
+            reader.readAsDataURL(file);
+        }
+
+        async function encryptText() {
+            const text = document.getElementById('plaintext').value;
+            const keySize = document.getElementById('keySize').value;
+            const button = document.getElementById('encryptTextBtn');
+            
+            if (!text) {
+                alert('Please enter text to encrypt');
+                return;
+            }
+
+            showLoading(button);
+
+            try {
+                const response = await fetch('/encrypt-text', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        text: text,
+                        key_size: keySize
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById('encryptedText').value = data.encrypted;
+                    document.getElementById('encryptionKey').value = data.key;
+                    document.getElementById('textInputType').textContent = `(Detected as: ${data.input_type || 'text'})`;
+                    document.getElementById('textEncryptionResults').style.display = 'block';
+                } else {
+                    alert(data.error || 'Encryption failed');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('An error occurred during encryption');
+            } finally {
+                resetButton(button, encryptTextBtnOriginal);
+            }
+        }
+
+        async function decryptText() {
+            const encryptedText = document.getElementById('decryptText').value;
+            const key = document.getElementById('decryptKey').value;
+            const button = document.getElementById('decryptTextBtn');
+            
+            if (!encryptedText || !key) {
+                alert('Please provide both encrypted data and key');
+                return;
+            }
+
+            showLoading(button);
+
+            try {
+                const response = await fetch('/decrypt-text', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        encrypted: encryptedText,
+                        key: key
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById('decryptedText').value = data.decrypted;
+                    document.getElementById('decryptedTextType').textContent = `(Detected as: ${data.input_type || 'text'})`;
+                    document.getElementById('textDecryptionResults').style.display = 'block';
+                } else {
+                    alert(data.error || 'Decryption failed');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Invalid encrypted data format or decryption failed');
+            } finally {
+                resetButton(button, decryptTextBtnOriginal);
+            }
+        }
+
+        async function encryptImage() {
+            const fileInput = document.getElementById('imageEncrypt');
+            const keySize = document.getElementById('imageKeySize').value;
+            const button = document.getElementById('encryptImageBtn');
+            
+            if (!fileInput.files || fileInput.files.length === 0) {
+                alert('Please select an image to encrypt');
+                return;
+            }
+
+            showLoading(button);
+
+            const formData = new FormData();
+            formData.append('image', fileInput.files[0]);
+            formData.append('key_size', keySize);
+
+            try {
+                const response = await fetch('/encrypt-image', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById('encryptedImage').value = data.encrypted;
+                    document.getElementById('imageEncryptionKey').value = data.key;
+                    document.getElementById('imageEncryptionResults').style.display = 'block';
+                } else {
+                    alert(data.error || 'Image encryption failed');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('An error occurred during image encryption');
+            } finally {
+                resetButton(button, encryptImageBtnOriginal);
+            }
+        }
+
+        async function decryptImage() {
+            const encryptedData = document.getElementById('imageDecryptData').value;
+            const key = document.getElementById('imageDecryptKey').value;
+            const button = document.getElementById('decryptImageBtn');
+            
+            if (!encryptedData || !key) {
+                alert('Please provide both encrypted data and key');
+                return;
+            }
+
+            showLoading(button);
+
+            try {
+                const response = await fetch('/decrypt-image', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        encrypted: encryptedData,
+                        key: key
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Image decryption failed');
+                }
+
+                currentDecryptedImageBlob = await response.blob();
+                const imageUrl = URL.createObjectURL(currentDecryptedImageBlob);
+                const decryptedImg = document.getElementById('decryptedImage');
+                decryptedImg.src = imageUrl;
+                decryptedImg.style.display = 'block';
+                document.getElementById('imageDecryptionResults').style.display = 'block';
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Invalid encrypted data format or decryption failed: ' + error.message);
+            } finally {
+                resetButton(button, decryptImageBtnOriginal);
+            }
+        }
+
+        function downloadDecryptedImage() {
+            if (!currentDecryptedImageBlob) {
+                alert('No decrypted image available to download');
+                return;
+            }
+            
+            const url = URL.createObjectURL(currentDecryptedImageBlob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'decrypted_image.png';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        async function copyImageToClipboard() {
+            if (!currentDecryptedImageBlob) {
+                alert('No decrypted image available to copy');
+                return;
+            }
+
+            try {
+                await navigator.clipboard.write([
+                    new ClipboardItem({
+                        [currentDecryptedImageBlob.type]: currentDecryptedImageBlob
+                    })
+                ]);
+                showCopyNotification();
+            } catch (error) {
+                console.error('Error copying image:', error);
+                alert('Failed to copy image to clipboard');
+            }
+        }
+
+        function logout() {
+            fetch('/logout', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    window.location.href = '/';
+                }
+            });
+        }
+    </script>
+</body>
+</html>
